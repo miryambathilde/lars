@@ -1,19 +1,21 @@
 const fsp = require('fs').promises;
 const fs = require('fs');
+const schema = require('../utilities/Validation/schema')
+const calculateDistance = require('../utilities/calculateDistance');
+const catchAsync = require('../utilities/catchAsync');
+const AppError = require('../utilities/appError');
 
-exports.getAnalytics = async(req, res, next) => {
+exports.getAnalytics = catchAsync(async(req, res, next) => {
   const { ip } = req.query; 
   let reportAnalytics = [];
   if (fs.existsSync(`${__dirname}/storeAnalytics.json`)) {
     const reportFile = await fsp.readFile(`${__dirname}/storeAnalytics.json`, 'utf-8')
     reportAnalytics = JSON.parse(reportFile)
     
-  } else {
-    return ('File does not exist');
-  }
+  } 
   for (let i=0; i<reportAnalytics.length; i++) {
     if (reportAnalytics[i].ip !== ip) {
-       return ('No Coordinates found with that IP');
+       return next(new AppError('No Coordinates found with that IP', 404));
     };
   }
 
@@ -34,4 +36,4 @@ exports.getAnalytics = async(req, res, next) => {
   }
 
   res.status(200).json({distance: totalLength})
-}
+});
